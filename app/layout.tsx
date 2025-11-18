@@ -9,26 +9,27 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Money Manager - Track Your Finances",
-  description: "Modern personal finance management app to track income and expenses",
+  description:
+    "Modern personal finance management app to track income and expenses",
   generator: "v0.app",
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
+        url: "/piemvp.png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/icon-dark-32x32.png",
+        url: "/piemvp.png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/icon.svg",
+        url: "/piemvp.svg",
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+    apple: "/piemvp.png",
   },
-}
+};
 
 export default function RootLayout({
   children,

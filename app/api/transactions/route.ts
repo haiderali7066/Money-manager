@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("e-com-mvp")
+    const db = client.db("Money-manager")
     const transactions = db.collection("transactions")
 
     // Get transactions for this user only
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("e-com-mvp")
+    const db = client.db("Money-manager")
     const transactions = db.collection("transactions")
 
     const result = await transactions.insertOne({

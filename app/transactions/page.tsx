@@ -1,95 +1,111 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { DashboardHeader } from "@/components/dashboard-header"
-import { Sidebar } from "@/components/sidebar"
-import { Navigation } from "@/components/navigation"
-import { TransactionList } from "@/components/transaction-list"
-import { AddTransactionModal } from "@/components/add-transaction-modal"
-import { Plus, Search } from "lucide-react"
-import { getUser, getToken, logout } from "@/lib/token-storage"
-import { apiCall } from "@/lib/api-client"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { Sidebar } from "@/components/sidebar";
+import { Navigation } from "@/components/navigation";
+import { TransactionList } from "@/components/transaction-list";
+import { AddTransactionModal } from "@/components/add-transaction-modal";
+import { Plus, Search } from "lucide-react";
+import { getUser, getToken, logout } from "@/lib/token-storage";
+import { apiCall } from "@/lib/api-client";
 
 interface Transaction {
-  _id: string
-  type: "income" | "expense"
-  category: string
-  amount: number
-  description: string
-  date: string
+  _id: string;
+  type: "income" | "expense";
+  category: string;
+  amount: number;
+  description: string;
+  date: string;
 }
 
 const CATEGORIES = {
   income: ["Salary", "Freelance", "Investment", "Bonus", "Other"],
-  expense: ["Food", "Transport", "Entertainment", "Utilities", "Shopping", "Healthcare", "Other"],
-}
+  expense: [
+    "Food",
+    "Transport",
+    "Entertainment",
+    "Utilities",
+    "Shopping",
+    "Healthcare",
+    "Other",
+  ],
+};
 
 export default function TransactionsPage() {
-  const router = useRouter()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all")
-  const [filterCategory, setFilterCategory] = useState("")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [modalOpen, setModalOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
+    "all"
+  );
+  const [filterCategory, setFilterCategory] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch transactions
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const user = getUser()
-        const token = getToken()
-
-        if (!user || !token) {
-          router.push("/login")
-          return
-        }
+        const user = getUser();
+        const token = getToken();
+        if (!user || !token) return router.push("/login");
 
         const data = await apiCall<Transaction[]>("/api/transactions", {
           method: "GET",
-        })
-        setTransactions(data)
+        });
+        setTransactions(data);
       } catch (err: any) {
-        console.error("[v0] Error fetching transactions:", err)
+        console.error("[v0] Error fetching transactions:", err);
         if (err.message === "Invalid token") {
-          logout()
-          router.push("/login")
+          logout();
+          router.push("/login");
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchTransactions()
-  }, [router])
+    fetchTransactions();
+  }, [router]);
 
-  const handleAddTransaction = async (transaction: Omit<Transaction, "_id">) => {
+  // Add transaction
+  const handleAddTransaction = async (
+    transaction: Omit<Transaction, "_id">
+  ) => {
     try {
       const newTransaction = await apiCall<Transaction>("/api/transactions", {
         method: "POST",
         body: JSON.stringify(transaction),
-      })
-      setTransactions([newTransaction, ...transactions])
-      setModalOpen(false)
+      });
+      setTransactions([newTransaction, ...transactions]);
+      setModalOpen(false);
     } catch (err: any) {
-      console.error("[v0] Error adding transaction:", err)
+      console.error("[v0] Error adding transaction:", err);
     }
-  }
+  };
 
-  const handleDeleteTransaction = async (id: string) => {
+  // Delete transaction
+  const handleDeleteTransaction = async (_id: string) => {
+    if (!_id || _id.length !== 24) {
+      console.error("Invalid transaction ID:", _id);
+      return;
+    }
     try {
-      await apiCall(`/api/transactions/${id}`, {
-        method: "DELETE",
-      })
-      setTransactions(transactions.filter((t) => t._id !== id))
+      await apiCall(`/api/transactions/${_id.trim()}`, { method: "DELETE" });
+      setTransactions(transactions.filter((t) => t._id !== _id));
     } catch (err: any) {
-      console.error("[v0] Error deleting transaction:", err)
+      console.error("[v0] Error deleting transaction:", err);
     }
-  }
+  };
 
-  const categories = filterType === "all" ? [...CATEGORIES.income, ...CATEGORIES.expense] : CATEGORIES[filterType]
+  const categories =
+    filterType === "all"
+      ? [...CATEGORIES.income, ...CATEGORIES.expense]
+      : CATEGORIES[filterType];
 
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -97,8 +113,7 @@ export default function TransactionsPage() {
           <p className="text-muted-foreground">Loading transactions...</p>
         </div>
       </div>
-    )
-  }
+    );
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,21 +124,23 @@ export default function TransactionsPage() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Transactions</h1>
-            <p className="text-muted-foreground mt-1">Manage and view all your transactions</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              Transactions
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage and view all your transactions
+            </p>
           </div>
           <button
             onClick={() => setModalOpen(true)}
             className="hidden sm:flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
           >
-            <Plus className="w-4 h-4" />
-            Add
+            <Plus className="w-4 h-4" /> Add
           </button>
         </div>
 
         {/* Filters */}
         <div className="space-y-4 bg-card rounded-xl border border-border p-4 sm:p-5">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -135,52 +152,33 @@ export default function TransactionsPage() {
             />
           </div>
 
-          {/* Type Filter */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <button
-              onClick={() => {
-                setFilterType("all")
-                setFilterCategory("")
-              }}
-              className={`py-2 px-3 rounded-lg font-medium text-sm transition-colors ${
-                filterType === "all"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground hover:bg-muted/80"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => {
-                setFilterType("income")
-                setFilterCategory("")
-              }}
-              className={`py-2 px-3 rounded-lg font-medium text-sm transition-colors ${
-                filterType === "income"
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-muted text-foreground hover:bg-muted/80"
-              }`}
-            >
-              Income
-            </button>
-            <button
-              onClick={() => {
-                setFilterType("expense")
-                setFilterCategory("")
-              }}
-              className={`py-2 px-3 rounded-lg font-medium text-sm transition-colors ${
-                filterType === "expense"
-                  ? "bg-destructive text-destructive-foreground"
-                  : "bg-muted text-foreground hover:bg-muted/80"
-              }`}
-            >
-              Expense
-            </button>
+            {(["all", "income", "expense"] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => {
+                  setFilterType(type);
+                  setFilterCategory("");
+                }}
+                className={`py-2 px-3 rounded-lg font-medium text-sm transition-colors ${
+                  filterType === type
+                    ? type === "all"
+                      ? "bg-primary text-primary-foreground"
+                      : type === "income"
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-destructive text-destructive-foreground"
+                    : "bg-muted text-foreground hover:bg-muted/80"
+                }`}
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </button>
+            ))}
           </div>
 
-          {/* Category Filter */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Category</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Category
+            </label>
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
@@ -216,8 +214,11 @@ export default function TransactionsPage() {
       </main>
 
       <Navigation />
-
-      <AddTransactionModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onAdd={handleAddTransaction} />
+      <AddTransactionModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onAdd={handleAddTransaction}
+      />
     </div>
-  )
+  );
 }

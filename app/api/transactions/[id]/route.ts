@@ -1,40 +1,40 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { ObjectId } from "mongodb"
-import clientPromise from "@/lib/mongodb"
-import { verifyToken, extractToken } from "@/lib/auth"
+import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
+import clientPromise from "@/lib/mongodb";
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// DELETE /api/transactions/:id
+export async function DELETE(req: Request, { params }: { params: any }) {
   try {
-    const { id } = await params
-    const token = extractToken(request.headers.get("authorization"))
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    // ✅ unwrap params if it's a Promise
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
+
+    if (!id || !ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid transaction ID" },
+        { status: 400 }
+      );
     }
 
-    const decoded = verifyToken(token)
-    if (!decoded) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    const client = await clientPromise;
+    const db = client.db();
+    const collection = db.collection("transactions");
+
+    const result = await collection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Transaction not found" },
+        { status: 404 }
+      );
     }
 
-    const client = await clientPromise
-    const db = client.db("e-com-mvp")
-    const transactions = db.collection("transactions")
-
-    // Verify ownership before deleting
-    const transaction = await transactions.findOne({ _id: new ObjectId(id) })
-    if (!transaction) {
-      return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
-    }
-
-    if (transaction.userId.toString() !== decoded.userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
-    await transactions.deleteOne({ _id: new ObjectId(id) })
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error("Delete transaction error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ message: "Transaction deleted successfully" });
+  } catch (err: any) {
+    console.error("[API] DELETE transaction error:", err);
+    return NextResponse.json(
+      { error: err.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
