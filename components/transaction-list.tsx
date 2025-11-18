@@ -130,7 +130,7 @@ export function TransactionList({
                   {onDelete && (
                     <button
                       onClick={() => onDelete(transaction._id.trim())}
-                      className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/20 text-destructive transition-all"
+                      className="p-2 rounded-lg opacity-90 group-hover:opacity-100 hover:bg-destructive/20 text-destructive transition-all"
                       aria-label="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
